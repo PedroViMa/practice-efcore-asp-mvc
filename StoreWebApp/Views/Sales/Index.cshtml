@@ -1,10 +1,10 @@
-﻿@model IEnumerable<StoreWebApp_Model.Models.Product>
+﻿@model IEnumerable<StoreWebApp_Model.Models.Sale>
 
 @{
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Sales";
 }
 
-<h1>Products</h1>
+<h1>Sales</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -13,16 +13,16 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Name)
+                @Html.DisplayNameFor(model => model.Quantity)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Description)
+                @Html.DisplayNameFor(model => model.Date)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Price)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.QuantityInStock)
+                @Html.DisplayNameFor(model => model.Product)
             </th>
             <th></th>
         </tr>
@@ -31,16 +31,16 @@
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.Name)
+                @Html.DisplayFor(modelItem => item.Quantity)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Description)
+                @Html.DisplayFor(modelItem => item.Date)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Price)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.QuantityInStock)
+                @Html.DisplayFor(modelItem => item.Product.Name)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

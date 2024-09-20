@@ -7,6 +7,6 @@
         public required DateTime Date { get; set; }
         public required decimal Price { get; set; }
         public required int ProductId { get; set; }
-        public required Product Product { get; set; }
+        public Product? Product { get; set; }
     }
 }

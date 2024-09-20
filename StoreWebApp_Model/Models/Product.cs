@@ -7,8 +7,8 @@
         public string? Description { get; set; }
         public required decimal Price { get; set; }
         public required int QuantityInStock { get; set; }
-        public required List<Sale> Sales { get; set; }
-        public required List<Purchase> Purchases { get; set; }
-        public required Inventory Inventory { get; set; }
+        public List<Sale>? Sales { get; set; }
+        public List<Purchase>? Purchases { get; set; }
+        public Inventory? Inventory { get; set; }
     }
 }
