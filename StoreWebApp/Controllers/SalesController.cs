@@ -3,36 +3,37 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using StoreWebApp_DAL.Data;
 using StoreWebApp_Model.Models;
+using StoreWebApp_DAL.DAO.Interfaces;
+using StoreWebApp_DAL.DAO.EFCRep;
 
 namespace StoreWebApp.Controllers
 {
     public class SalesController : Controller
     {
-        private readonly StoreDbContext _context;
+        private readonly IRepSale _repSale;
+        private readonly IRepProduct _repProduct;
 
         public SalesController(StoreDbContext context)
         {
-            _context = context;
+            _repProduct = new EFCProductRep(context);
+            _repSale = new EFCSaleRep(context);
         }
 
         // GET: Sales
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var storeDbContext = _context.Sales.Include(s => s.Product);
-            return View(await storeDbContext.ToListAsync());
+            return View(_repSale.GetSales());
         }
 
         // GET: Sales/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public IActionResult Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var sale = await _context.Sales
-                .Include(s => s.Product)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var sale = _repSale.GetSaleById(id);
             if (sale == null)
             {
                 return NotFound();
@@ -44,7 +45,7 @@ namespace StoreWebApp.Controllers
         // GET: Sales/Create
         public IActionResult Create()
         {
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name");
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name");
             return View();
         }
 
@@ -53,32 +54,31 @@ namespace StoreWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Quantity,Date,Price,ProductId")] Sale sale)
+        public IActionResult Create([Bind("Id,Quantity,Date,Price,ProductId")] Sale sale)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(sale);
-                await _context.SaveChangesAsync();
+                _repSale.CreateSale(sale);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", sale.ProductId);
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", sale.ProductId);
             return View(sale);
         }
 
         // GET: Sales/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public IActionResult Edit(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var sale = await _context.Sales.FindAsync(id);
+            var sale = _repSale.GetSaleById(id);
             if (sale == null)
             {
                 return NotFound();
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", sale.ProductId);
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", sale.ProductId);
             return View(sale);
         }
 
@@ -87,7 +87,7 @@ namespace StoreWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Quantity,Date,Price,ProductId")] Sale sale)
+        public IActionResult Edit(int id, [Bind("Id,Quantity,Date,Price,ProductId")] Sale sale)
         {
             if (id != sale.Id)
             {
@@ -98,8 +98,7 @@ namespace StoreWebApp.Controllers
             {
                 try
                 {
-                    _context.Update(sale);
-                    await _context.SaveChangesAsync();
+                    _repSale.UpdateSale(sale);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -114,21 +113,19 @@ namespace StoreWebApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", sale.ProductId);
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", sale.ProductId);
             return View(sale);
         }
 
         // GET: Sales/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public IActionResult Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var sale = await _context.Sales
-                .Include(s => s.Product)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var sale = _repSale.GetSaleById(id);
             if (sale == null)
             {
                 return NotFound();
@@ -140,21 +137,16 @@ namespace StoreWebApp.Controllers
         // POST: Sales/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public IActionResult DeleteConfirmed(int id)
         {
-            var sale = await _context.Sales.FindAsync(id);
-            if (sale != null)
-            {
-                _context.Sales.Remove(sale);
-            }
-
-            await _context.SaveChangesAsync();
+            _repSale.DeleteSale(id);
             return RedirectToAction(nameof(Index));
         }
 
         private bool SaleExists(int id)
         {
-            return _context.Sales.Any(e => e.Id == id);
+            return _repSale.GetSaleById(id)
+                != null;
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using StoreWebApp_DAL.DAO.Interfaces;
+using StoreWebApp_DAL.DAO.EFCRep;
 using StoreWebApp_DAL.Data;
 using StoreWebApp_Model.Models;
 
@@ -8,31 +10,30 @@ namespace StoreWebApp.Controllers
 {
     public class InventoriesController : Controller
     {
-        private readonly StoreDbContext _context;
+        private readonly IRepInventory _repInventory;
+        private readonly IRepProduct _repProduct;
 
         public InventoriesController(StoreDbContext context)
         {
-            _context = context;
+            _repInventory = new EFCInventoryRep(context);
+            _repProduct = new EFCProductRep(context);
         }
 
         // GET: Inventories
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var storeDbContext = _context.Inventory.Include(i => i.Product);
-            return View(await storeDbContext.ToListAsync());
+            return View(_repInventory.GetInventories());
         }
 
         // GET: Inventories/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public IActionResult Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var inventory = await _context.Inventory
-                .Include(i => i.Product)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var inventory = _repInventory.GetInventoryById(id);
             if (inventory == null)
             {
                 return NotFound();
@@ -44,7 +45,7 @@ namespace StoreWebApp.Controllers
         // GET: Inventories/Create
         public IActionResult Create()
         {
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name");
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name");
             return View();
         }
 
@@ -53,32 +54,31 @@ namespace StoreWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Quantity,Date,ProductId")] Inventory inventory)
+        public IActionResult Create([Bind("Id,Quantity,Date,ProductId")] Inventory inventory)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(inventory);
-                await _context.SaveChangesAsync();
+                _repInventory.CreateInventory(inventory);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", inventory.ProductId);
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", inventory.ProductId);
             return View(inventory);
         }
 
         // GET: Inventories/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public IActionResult Edit(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var inventory = await _context.Inventory.FindAsync(id);
+            var inventory = _repInventory.GetInventoryById(id);
             if (inventory == null)
             {
                 return NotFound();
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", inventory.ProductId);
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", inventory.ProductId);
             return View(inventory);
         }
 
@@ -87,7 +87,7 @@ namespace StoreWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Quantity,Date,ProductId")] Inventory inventory)
+        public IActionResult Edit(int id, [Bind("Id,Quantity,Date,ProductId")] Inventory inventory)
         {
             if (id != inventory.Id)
             {
@@ -98,8 +98,7 @@ namespace StoreWebApp.Controllers
             {
                 try
                 {
-                    _context.Update(inventory);
-                    await _context.SaveChangesAsync();
+                    _repInventory.UpdateInventory(inventory);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -114,21 +113,19 @@ namespace StoreWebApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", inventory.ProductId);
+            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", inventory.ProductId);
             return View(inventory);
         }
 
         // GET: Inventories/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public IActionResult Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var inventory = await _context.Inventory
-                .Include(i => i.Product)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var inventory = _repInventory.GetInventoryById(id);
             if (inventory == null)
             {
                 return NotFound();
@@ -140,21 +137,16 @@ namespace StoreWebApp.Controllers
         // POST: Inventories/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public IActionResult DeleteConfirmed(int id)
         {
-            var inventory = await _context.Inventory.FindAsync(id);
-            if (inventory != null)
-            {
-                _context.Inventory.Remove(inventory);
-            }
-
-            await _context.SaveChangesAsync();
+            _repInventory.DeleteInventory(id);
             return RedirectToAction(nameof(Index));
         }
 
         private bool InventoryExists(int id)
         {
-            return _context.Inventory.Any(e => e.Id == id);
+            return _repInventory.GetInventoryById(id)
+                != null;
         }
     }
 }

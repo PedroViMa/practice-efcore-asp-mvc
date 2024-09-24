@@ -1,7 +1,7 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StoreWebApp_DAL.DAO.EFCRep;
+using StoreWebApp_DAL.DAO.Interfaces;
 using StoreWebApp_DAL.Data;
 using StoreWebApp_Model.Models;
 
@@ -9,29 +9,28 @@ namespace StoreWebApp.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly StoreDbContext _context;
+        private readonly IRepProduct _repProduct;
 
-        public ProductsController(StoreDbContext context)
+        public ProductsController(StoreDbContext db)
         {
-            _context = context;
+            _repProduct = new EFCProductRep(db);
         }
 
         // GET: Products
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            return View(await _context.Products.ToListAsync());
+            return View(_repProduct.GetProducts());
         }
 
         // GET: Products/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public IActionResult Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product = _repProduct.GetProductById(id);
             if (product == null)
             {
                 return NotFound();
@@ -51,13 +50,11 @@ namespace StoreWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Description,Price,QuantityInStock")] Product product)
+        public IActionResult Create([Bind("Id,Name,Description,Price,QuantityInStock")] Product product)
         {
-            Console.WriteLine(product.Id +" "+product.Name + product.Description + product.Price + product.QuantityInStock);
             if (ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
+                _repProduct.CreateProduct(product);
                 return RedirectToAction(nameof(Index));
             }
             else
@@ -68,14 +65,14 @@ namespace StoreWebApp.Controllers
         }
 
         // GET: Products/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public IActionResult Edit(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = await _context.Products.FindAsync(id);
+            var product = _repProduct.GetProductById(id);
             if (product == null)
             {
                 return NotFound();
@@ -88,7 +85,7 @@ namespace StoreWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price,QuantityInStock")] Product product)
+        public IActionResult Edit(int id, [Bind("Id,Name,Description,Price,QuantityInStock")] Product product)
         {
             if (id != product.Id)
             {
@@ -99,8 +96,7 @@ namespace StoreWebApp.Controllers
             {
                 try
                 {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
+                    _repProduct.UpdateProduct(product);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -119,15 +115,14 @@ namespace StoreWebApp.Controllers
         }
 
         // GET: Products/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public IActionResult Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product = _repProduct.GetProductById(id);
             if (product == null)
             {
                 return NotFound();
@@ -139,21 +134,16 @@ namespace StoreWebApp.Controllers
         // POST: Products/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public IActionResult DeleteConfirmed(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-            }
-
-            await _context.SaveChangesAsync();
+            _repProduct.DeleteProduct(id);
             return RedirectToAction(nameof(Index));
         }
 
         private bool ProductExists(int id)
         {
-            return _context.Products.Any(e => e.Id == id);
+            return _repProduct.GetProductById(id)
+                != null;
         }
     }
 }
