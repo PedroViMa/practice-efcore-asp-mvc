@@ -5,6 +5,7 @@ using StoreWebApp_DAL.Data;
 using StoreWebApp_Model.Models;
 using StoreWebApp_DAL.DAO.Interfaces;
 using StoreWebApp_DAL.DAO.EFCRep;
+using StoreWebApp_DAL.DAO.AdoRep;
 
 namespace StoreWebApp.Controllers
 {
@@ -15,8 +16,10 @@ namespace StoreWebApp.Controllers
 
         public SalesController(StoreDbContext context)
         {
-            _repProduct = new EFCProductRep(context);
-            _repSale = new EFCSaleRep(context);
+            //_repProduct = new EFCProductRep(context);
+            //_repSale = new EFCSaleRep(context);
+            _repProduct = new AdoProductRep();
+            _repSale = new AdoSaleRep();
         }
 
         // GET: Sales

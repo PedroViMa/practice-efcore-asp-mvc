@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using StoreWebApp_DAL.DAO.AdoRep;
 using StoreWebApp_DAL.DAO.EFCRep;
 using StoreWebApp_DAL.DAO.Interfaces;
 using StoreWebApp_DAL.Data;
@@ -15,8 +16,10 @@ namespace StoreWebApp.Controllers
 
         public PurchasesController(StoreDbContext context)
         {
-            _repProduct = new EFCProductRep(context);
-            _repPurchase = new EFCPurchaseRep(context);
+            //_repProduct = new EFCProductRep(context);
+            //_repPurchase = new EFCPurchaseRep(context);
+            _repProduct = new AdoProductRep();
+            _repPurchase = new AdoPurchaseRep();
         }
 
         // GET: Purchases

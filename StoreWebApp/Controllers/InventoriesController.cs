@@ -5,6 +5,7 @@ using StoreWebApp_DAL.DAO.Interfaces;
 using StoreWebApp_DAL.DAO.EFCRep;
 using StoreWebApp_DAL.Data;
 using StoreWebApp_Model.Models;
+using StoreWebApp_DAL.DAO.AdoRep;
 
 namespace StoreWebApp.Controllers
 {
@@ -15,8 +16,10 @@ namespace StoreWebApp.Controllers
 
         public InventoriesController(StoreDbContext context)
         {
-            _repInventory = new EFCInventoryRep(context);
-            _repProduct = new EFCProductRep(context);
+            //_repInventory = new EFCInventoryRep(context);
+            //_repProduct = new EFCProductRep(context);
+            _repInventory = new AdoInventoryRep();
+            _repProduct = new AdoProductRep();
         }
 
         // GET: Inventories

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StoreWebApp_DAL.DAO.AdoRep;
 using StoreWebApp_DAL.DAO.EFCRep;
 using StoreWebApp_DAL.DAO.Interfaces;
 using StoreWebApp_DAL.Data;
@@ -13,7 +14,8 @@ namespace StoreWebApp.Controllers
 
         public ProductsController(StoreDbContext db)
         {
-            _repProduct = new EFCProductRep(db);
+            //_repProduct = new EFCProductRep(db);
+            _repProduct = new AdoProductRep();
         }
 
         // GET: Products
