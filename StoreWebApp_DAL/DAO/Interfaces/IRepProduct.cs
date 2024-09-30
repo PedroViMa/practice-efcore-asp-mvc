@@ -9,5 +9,6 @@ namespace StoreWebApp_DAL.DAO.Interfaces
         public void CreateProduct(Product product);
         public void UpdateProduct(Product product);
         public void DeleteProduct(int id);
+        public bool ProductExists(int? id);
     }
 }

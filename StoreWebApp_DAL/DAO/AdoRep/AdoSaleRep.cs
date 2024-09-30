@@ -135,6 +135,13 @@ namespace StoreWebApp_DAL.DAO.AdoRep
             return sales;
         }
 
+        public bool SaleExists(int? id)
+        {
+            if (GetSaleById(id) != null) return true;
+
+            return false;
+        }
+
         public void UpdateSale(Sale sale)
         {
             string query = "UPDATE Sale SET " +

@@ -9,5 +9,6 @@ namespace StoreWebApp_DAL.DAO.Interfaces
         public void CreatePurchase(Purchase purchase);
         public void UpdatePurchase(Purchase purchase);
         public void DeletePurchase(int id);
+        bool PurchaseExists(int? id);
     }
 }

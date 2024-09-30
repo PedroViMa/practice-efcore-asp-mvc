@@ -1,155 +1,165 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using StoreWebApp_DAL.Data;
 using StoreWebApp_Model.Models;
-using StoreWebApp_DAL.DAO.Interfaces;
-using StoreWebApp_DAL.DAO.EFCRep;
-using StoreWebApp_DAL.DAO.AdoRep;
+using StoreWebApp.Data;
 
 namespace StoreWebApp.Controllers
 {
     public class SalesController : Controller
     {
-        private readonly IRepSale _repSale;
-        private readonly IRepProduct _repProduct;
+        private readonly IWebApiExecutor webApiExecutor;
 
-        public SalesController(StoreDbContext context)
+        public SalesController(IWebApiExecutor webApiExecutor)
         {
-            //_repProduct = new EFCProductRep(context);
-            //_repSale = new EFCSaleRep(context);
-            _repProduct = new AdoProductRep();
-            _repSale = new AdoSaleRep();
+            this.webApiExecutor = webApiExecutor;
         }
 
-        // GET: Sales
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View(_repSale.GetSales());
+            return View(await webApiExecutor.InvokeGet<List<Sale>>("sales"));
         }
 
-        // GET: Sales/Details/5
-        public IActionResult Details(int? id)
+        public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var sale = _repSale.GetSaleById(id);
+            var sale = await webApiExecutor.InvokeGet<Sale>($"sales/{id}");
             if (sale == null)
             {
                 return NotFound();
             }
-
             return View(sale);
         }
 
-        // GET: Sales/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name");
+            var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+            ViewData["ProductId"] = new SelectList(products, "Id", "Name");
             return View();
         }
 
-        // POST: Sales/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Id,Quantity,Date,Price,ProductId")] Sale sale)
+        public async Task<IActionResult> Create(Sale sale)
         {
-            if (ModelState.IsValid)
-            {
-                _repSale.CreateSale(sale);
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", sale.ProductId);
-            return View(sale);
-        }
-
-        // GET: Sales/Edit/5
-        public IActionResult Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var sale = _repSale.GetSaleById(id);
-            if (sale == null)
-            {
-                return NotFound();
-            }
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", sale.ProductId);
-            return View(sale);
-        }
-
-        // POST: Sales/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, [Bind("Id,Quantity,Date,Price,ProductId")] Sale sale)
-        {
-            if (id != sale.Id)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _repSale.UpdateSale(sale);
+                    var response = await webApiExecutor.InvokePost("sales", sale);
+                    if (response != null)
+                    {
+                        return RedirectToAction(nameof(Index));
+                    }
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (WebApiException e)
                 {
-                    if (!SaleExists(sale.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    HandleWebApiException(e);
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", sale.ProductId);
+
+            var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+            ViewData["ProductId"] = new SelectList(products, "Id", "Name", sale.ProductId);
+
             return View(sale);
         }
 
-        // GET: Sales/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var sale = await webApiExecutor.InvokeGet<Sale>($"sales/{id}");
+                if (sale != null)
+                {
+                    var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+                    ViewData["ProductId"] = new SelectList(products, "Id", "Name", sale.ProductId);
+
+                    return View(sale);
+                }
+            }
+            catch (WebApiException e)
+            {
+                HandleWebApiException(e);
+                return View();
             }
 
-            var sale = _repSale.GetSaleById(id);
-            if (sale == null)
+            return NotFound();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Sale sale)
+        {
+            if (ModelState.IsValid)
             {
-                return NotFound();
+                try
+                {
+                    await webApiExecutor.InvokePut($"sales/{sale.Id}", sale);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (WebApiException e)
+                {
+                    HandleWebApiException(e);
+                }
             }
+
+            var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+            ViewData["ProductId"] = new SelectList(products, "Id", "Name", sale.ProductId);
 
             return View(sale);
         }
 
-        // POST: Sales/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            try
+            {
+                var sale = await webApiExecutor.InvokeGet<Sale>($"sales/{id}");
+                if (sale != null)
+                {
+                    return View(sale);
+                }
+            }
+            catch (WebApiException e)
+            {
+                HandleWebApiException(e);
+                return View();
+            }
+            return NotFound();
+        }
+
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            _repSale.DeleteSale(id);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await webApiExecutor.InvokeDelete($"sales/{id}");
+                return RedirectToAction(nameof(Index));
+            }
+            catch (WebApiException ex)
+            {
+                HandleWebApiException(ex);
+                return View();
+            }
         }
 
-        private bool SaleExists(int id)
+        private void HandleWebApiException(WebApiException e)
         {
-            return _repSale.GetSaleById(id)
-                != null;
+            if (e.Response != null &&
+                e.Response.Errors != null &&
+                e.Response.Errors.Count > 0)
+            {
+                foreach (var error in e.Response.Errors)
+                {
+                    ModelState.AddModelError(error.Key, string.Join(";", error.Value));
+                }
+            }
+            else if (e.Response != null)
+            {
+                ModelState.AddModelError("Error", e.Response.Title);
+            }
+            else
+            {
+                ModelState.AddModelError("Error", e.Message);
+            }
         }
     }
 }

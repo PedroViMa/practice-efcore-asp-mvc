@@ -41,7 +41,8 @@ namespace StoreWebApp_DAL.DAO.EFCRep
 
         public List<Purchase> GetPurchases()
         {
-            return _dbContext.Purchases.Include(p => p.Product).ToList();
+            return _dbContext.Purchases.Include(p => p.Product)
+                .ToList();
         }
 
         public void UpdatePurchase(Purchase purchase)
@@ -55,6 +56,11 @@ namespace StoreWebApp_DAL.DAO.EFCRep
             {
                 throw;
             }
+        }
+
+        public bool PurchaseExists(int? id)
+        {
+            return _dbContext.Purchases.Any(p => p.Id == id);
         }
     }
 }

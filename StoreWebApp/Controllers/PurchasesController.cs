@@ -1,88 +1,92 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using StoreWebApp_DAL.DAO.AdoRep;
-using StoreWebApp_DAL.DAO.EFCRep;
-using StoreWebApp_DAL.DAO.Interfaces;
-using StoreWebApp_DAL.Data;
+using StoreWebApp.Data;
 using StoreWebApp_Model.Models;
 
 namespace StoreWebApp.Controllers
 {
     public class PurchasesController : Controller
     {
-        private readonly IRepPurchase _repPurchase;
-        private readonly IRepProduct _repProduct;
+        private readonly IWebApiExecutor webApiExecutor;
 
-        public PurchasesController(StoreDbContext context)
+        public PurchasesController(IWebApiExecutor webApiExecutor)
         {
-            //_repProduct = new EFCProductRep(context);
-            //_repPurchase = new EFCPurchaseRep(context);
-            _repProduct = new AdoProductRep();
-            _repPurchase = new AdoPurchaseRep();
+            this.webApiExecutor = webApiExecutor;
         }
 
         // GET: Purchases
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View(_repPurchase.GetPurchases());
+            return View(await webApiExecutor.InvokeGet<List<Purchase>>("purchases"));
         }
 
         // GET: Purchases/Details/5
-        public IActionResult Details(int? id)
+        public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var purchase = _repPurchase.GetPurchaseById(id);
+            var purchase = await webApiExecutor.InvokeGet<Purchase>($"purchases/{id}");
             if (purchase == null)
             {
                 return NotFound();
             }
-
             return View(purchase);
         }
 
         // GET: Purchases/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name");
+            var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+            ViewData["ProductId"] = new SelectList(products, "Id", "Name");
             return View();
         }
 
         // POST: Purchases/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Id,Quantity,Date,Price,ProductId")] Purchase purchase)
+        public async Task<IActionResult> Create(Purchase purchase)
         {
             if (ModelState.IsValid)
             {
-                _repPurchase.CreatePurchase(purchase);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    var response = await webApiExecutor.InvokePost("purchases", purchase);
+                    if (response != null)
+                    {
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+                catch (WebApiException e)
+                {
+                    HandleWebApiException(e);
+                }
             }
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", purchase.ProductId);
+
+            var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+            ViewData["ProductId"] = new SelectList(products, "Id", "Name", purchase.ProductId);
+            
             return View(purchase);
         }
 
         // GET: Purchases/Edit/5
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var purchase = await webApiExecutor.InvokeGet<Purchase>($"purchases/{id}");
+                if (purchase != null)
+                {
+                    var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+                    ViewData["ProductId"] = new SelectList(products, "Id", "Name", purchase.ProductId);
+
+                    return View(purchase);
+                }
+            }
+            catch (WebApiException e)
+            {
+                HandleWebApiException(e);
+                return View();
             }
 
-            var purchase = _repPurchase.GetPurchaseById(id);
-            if (purchase == null)
-            {
-                return NotFound();
-            }
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", purchase.ProductId);
-            return View(purchase);
+            return NotFound();
         }
 
         // POST: Purchases/Edit/5
@@ -90,66 +94,82 @@ namespace StoreWebApp.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, [Bind("Id,Quantity,Date,Price,ProductId")] Purchase purchase)
+        public async Task<IActionResult> Edit(int id, Purchase purchase)
         {
-            if (id != purchase.Id)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _repPurchase.UpdatePurchase(purchase);
+                    await webApiExecutor.InvokePut($"purchases/{purchase.Id}", purchase);
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (WebApiException e)
                 {
-                    if (!PurchaseExists(purchase.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    HandleWebApiException(e);
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["ProductId"] = new SelectList(_repProduct.GetProducts(), "Id", "Name", purchase.ProductId);
+
+            var products = await webApiExecutor.InvokeGet<List<Product>>("products");
+            ViewData["ProductId"] = new SelectList(products, "Id", "Name", purchase.ProductId);
+            
             return View(purchase);
         }
 
         // GET: Purchases/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var product = await webApiExecutor.InvokeGet<Purchase>($"purchases/{id}");
+                if (product != null)
+                {
+                    return View(product);
+                }
             }
-
-            var purchase = _repPurchase.GetPurchaseById(id);
-            if (purchase == null)
+            catch (WebApiException e)
             {
-                return NotFound();
+                HandleWebApiException(e);
+                return View();
             }
-
-            return View(purchase);
+            return NotFound();
         }
 
         // POST: Purchases/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            _repPurchase.DeletePurchase(id);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await webApiExecutor.InvokeDelete($"purchases/{id}");
+                return RedirectToAction(nameof(Index));
+            }
+            catch (WebApiException ex)
+            {
+                HandleWebApiException(ex);
+                return View();
+            }
         }
 
-        private bool PurchaseExists(int id)
+        private void HandleWebApiException(WebApiException e)
         {
-            return _repPurchase.GetPurchaseById(id)
-                != null;
+            if (e.Response != null &&
+                e.Response.Errors != null &&
+                e.Response.Errors.Count > 0)
+            {
+                foreach (var error in e.Response.Errors)
+                {
+                    ModelState.AddModelError(error.Key, string.Join(";", error.Value));
+                }
+            }
+            else if (e.Response != null)
+            {
+                ModelState.AddModelError("Error", e.Response.Title);
+            }
+            else
+            {
+                ModelState.AddModelError("Error", e.Message);
+            }
         }
     }
 }

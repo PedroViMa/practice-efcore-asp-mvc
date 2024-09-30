@@ -9,5 +9,6 @@ namespace StoreWebApp_DAL.DAO.Interfaces
         public void CreateSale(Sale sale);
         public void UpdateSale(Sale sale);
         public void DeleteSale(int id);
+        bool SaleExists(int? id);
     }
 }

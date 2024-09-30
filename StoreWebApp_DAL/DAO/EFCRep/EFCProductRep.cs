@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using StoreWebApp_DAL.DAO.Interfaces;
+﻿using StoreWebApp_DAL.DAO.Interfaces;
 using StoreWebApp_DAL.Data;
 using StoreWebApp_Model.Models;
 using System.Data;
@@ -54,6 +53,11 @@ namespace StoreWebApp_DAL.DAO.EFCRep
             {
                 throw;
             }
+        }
+
+        public bool ProductExists(int? id)
+        {
+            return _dbContext.Products.Any(m => m.Id == id);
         }
     }
 }

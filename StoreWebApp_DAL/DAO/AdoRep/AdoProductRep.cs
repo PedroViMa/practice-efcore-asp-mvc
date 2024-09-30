@@ -133,6 +133,13 @@ namespace StoreWebApp_DAL.DAO.AdoRep
             return products;
         }
 
+        public bool ProductExists(int? id)
+        {
+            if (GetProductById(id) != null) return true;
+
+            return false;
+        }
+
         public void UpdateProduct(Product product)
         {
             string query = "UPDATE Product SET " +

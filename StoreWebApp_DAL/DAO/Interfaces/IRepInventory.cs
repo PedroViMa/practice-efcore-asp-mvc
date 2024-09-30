@@ -9,5 +9,6 @@ namespace StoreWebApp_DAL.DAO.Interfaces
         public void CreateInventory(Inventory inventory);
         public void UpdateInventory(Inventory inventory);
         public void DeleteInventory(int id);
+        bool InventoryExists(int? id);
     }
 }

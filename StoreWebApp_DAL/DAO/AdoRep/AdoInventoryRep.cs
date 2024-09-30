@@ -132,6 +132,13 @@ namespace StoreWebApp_DAL.DAO.AdoRep
             return inventory;
         }
 
+        public bool InventoryExists(int? id)
+        {
+            if (GetInventoryById(id) != null) return true;
+
+            return false;
+        }
+
         public void UpdateInventory(Inventory inventory)
         {
             string query = "UPDATE Inventory SET " +

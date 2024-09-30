@@ -135,6 +135,13 @@ namespace StoreWebApp_DAL.DAO.AdoRep
             return purchases;
         }
 
+        public bool PurchaseExists(int? id)
+        {
+            if (GetPurchaseById(id) != null) return true;
+
+            return false;
+        }
+
         public void UpdatePurchase(Purchase purchase)
         {
             string query = "UPDATE Purchase SET " +

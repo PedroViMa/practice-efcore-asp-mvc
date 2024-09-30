@@ -56,5 +56,10 @@ namespace StoreWebApp_DAL.DAO.EFCRep
                 throw;
             }
         }
+
+        public bool InventoryExists(int? id)
+        {
+            return _dbContext.Inventory.Any(p => p.Id == id);
+        }
     }
 }
